@@ -10,7 +10,7 @@ ifneq (,$(filter esp_idf_heap,$(USEMODULE)))
 endif
 
 ifneq (,$(filter esp_wifi_any,$(USEMODULE)))
-    DIRS += nvs_flash
+##@@##    DIRS += nvs_flash
     DIRS += wpa_supplicant
     INCLUDES += -I$(ESP32_SDK_DIR)/components/smartconfig_ack/include
 endif
