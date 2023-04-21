@@ -162,6 +162,12 @@ extern "C" {
 #define CONFIG_ETH_DMA_TX_BUFFER_NUM            10
 #endif
 
+#define CONFIG_ETH_USE_OPENETH                  1// @@ 0: original behavior, 1: for qemu
+#if CONFIG_ETH_USE_OPENETH
+#define CONFIG_ETH_OPENETH_DMA_RX_BUFFER_NUM    4// @@
+#define CONFIG_ETH_OPENETH_DMA_TX_BUFFER_NUM    1// @@
+#endif
+
 /**
  * ESP32 specific BLE driver configuration (DO NOT CHANGE)
  */

@@ -4,6 +4,7 @@ MODULE = esp_idf_eth
 ESP32_SDK_SRC = \
   components/esp_eth/src/esp_eth.c \
   components/esp_eth/src/esp_eth_mac_esp.c  \
+  components/esp_eth/src/esp_eth_mac_openeth.c  \
   components/esp_eth/src/esp_eth_netif_glue.c  \
   components/esp_eth/src/esp_eth_phy.c  \
   components/esp_eth/src/esp_eth_phy_dp83848.c  \

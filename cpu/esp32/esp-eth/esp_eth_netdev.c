@@ -188,8 +188,14 @@ static int _esp_eth_init(netdev_t *netdev)
         mac_config.clock_config.rmii.clock_gpio = EMAC_CLK_OUT_180_GPIO;
     }
 
+#if CONFIG_ETH_USE_OPENETH
+    phy_config.autonego_timeout_ms = 100;
+    esp_eth_mac_t *mac = esp_eth_mac_new_openeth(&mac_config);
+    esp_eth_phy_t *phy = esp_eth_phy_new_dp83848(&phy_config);
+#else
     esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&mac_config);
     esp_eth_phy_t *phy = esp_eth_phy_new_xxxxx(&phy_config);
+#endif
 
     /* generate Ethernet driver configuration */
     esp_eth_config_t config = ETH_DEFAULT_CONFIG(mac, phy);
