@@ -43,7 +43,8 @@
 #include "net/dsm.h"
 #endif
 
-#define ENABLE_DEBUG 0
+//#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1 //@@
 #include "debug.h"
 
 /* Sentinel value indicating that no immediate response is required */
@@ -67,6 +68,8 @@ static ssize_t _well_known_core_handler(coap_pkt_t* pdu, uint8_t *buf, size_t le
 static void _cease_retransmission(gcoap_request_memo_t *memo);
 static size_t _handle_req(gcoap_socket_t *sock, coap_pkt_t *pdu, uint8_t *buf,
                           size_t len, sock_udp_ep_t *remote);
+static void _handle_req_minerva(gcoap_socket_t *sock, coap_pkt_t *pdu, uint8_t *buf,
+                          size_t len, sock_udp_ep_t *remote, sock_udp_aux_tx_t *aux);//@@
 static void _expire_request(gcoap_request_memo_t *memo);
 static void _find_req_memo(gcoap_request_memo_t **memo_ptr, coap_pkt_t *pdu,
                            const sock_udp_ep_t *remote, bool by_mid);
@@ -284,6 +287,7 @@ static void _on_sock_dtls_evt(sock_dtls_t *sock, sock_async_flags_t type, void *
         sock_dtls_session_get_udp_ep(&socket.ctx_dtls_session, &ep);
         /* Truncated DTLS messages would already have gotten lost at verification */
         _process_coap_pdu(&socket, &ep, NULL, _listen_buf, res, false);
+        DEBUG("gcoap: @@ after _process_coap_pdu() via _on_sock_dtls_evt()\n");
     }
 }
 
@@ -303,9 +307,18 @@ static void _dtls_free_up_session(void *arg) {
 }
 #endif /* MODULE_GCOAP_DTLS */
 
+extern void xbd_on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg);
+
 /* Handles UDP socket events from the event queue. */
 static void _on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg)
 {
+    //==== @@ !!!!
+    DEBUG("gcoap: @@ _on_sock_udp_evt(): sock: %p type: %u arg: %p\n", (void *)sock, type, arg);
+    assert(sizeof(sock_async_flags_t) == sizeof(size_t));
+    xbd_on_sock_udp_evt(sock, type, arg);
+    //return; // !!!! debug, lgtm
+    //==== @@ !!!!
+
     (void)arg;
     sock_udp_ep_t remote;
 
@@ -366,6 +379,7 @@ static void _on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *ar
          };
 
         _process_coap_pdu(&socket, &remote, aux_out_ptr, _listen_buf, cursor, truncated);
+        DEBUG("gcoap: @@ after _process_coap_pdu() via _on_sock_udp_evt()\n");
     }
 }
 
@@ -439,8 +453,17 @@ static void _process_coap_pdu(gcoap_socket_t *sock, sock_udp_ep_t *remote, sock_
                 pdu_len = gcoap_response(&pdu, _listen_buf, sizeof(_listen_buf),
                                          COAP_CODE_REQUEST_ENTITY_TOO_LARGE);
             } else {
+#if 0//orig
+                //==== orig ^^
                 pdu_len = _handle_req(sock, &pdu, _listen_buf,
                                       sizeof(_listen_buf), remote);
+                //==== orig $$
+                (void)_handle_req_minerva;//@@ shim
+#else//@@
+                _handle_req_minerva(sock, &pdu, _listen_buf,
+                                    sizeof(_listen_buf), remote, aux);
+                return;
+#endif
             }
 
             if (pdu_len > 0) {
@@ -613,6 +636,19 @@ static void _cease_retransmission(gcoap_request_memo_t *memo) {
     }
 }
 
+static void _handle_req_minerva(gcoap_socket_t *sock, coap_pkt_t *pdu, uint8_t *buf,
+                          size_t len, sock_udp_ep_t *remote, sock_udp_aux_tx_t *aux) {//@@
+    DEBUG("gcoap: @@ _handle_req_minerva(): ^^\n");
+
+    size_t pdu_len = _handle_req(sock, pdu, buf, len, remote);
+
+    if (pdu_len > 0) {
+        ssize_t bytes = _tl_send(sock, buf, pdu_len, remote, aux);
+        if (bytes <= 0) {
+            DEBUG("gcoap: send response failed: %d\n", (int)bytes);
+        }
+    }
+}
 /*
  * Main request handler: generates response PDU in the provided buffer.
  *
