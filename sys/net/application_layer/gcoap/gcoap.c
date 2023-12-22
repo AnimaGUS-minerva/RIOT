@@ -453,13 +453,13 @@ static void _process_coap_pdu(gcoap_socket_t *sock, sock_udp_ep_t *remote, sock_
                 pdu_len = gcoap_response(&pdu, _listen_buf, sizeof(_listen_buf),
                                          COAP_CODE_REQUEST_ENTITY_TOO_LARGE);
             } else {
-#if 0//orig
+#if 1//orig
                 //==== orig ^^
                 pdu_len = _handle_req(sock, &pdu, _listen_buf,
                                       sizeof(_listen_buf), remote);
                 //==== orig $$
                 (void)_handle_req_minerva;//@@ shim
-#else//@@
+#else//@@ debug
                 _handle_req_minerva(sock, &pdu, _listen_buf,
                                     sizeof(_listen_buf), remote, aux);
                 return;
@@ -560,6 +560,7 @@ static void _process_coap_pdu(gcoap_socket_t *sock, sock_udp_ep_t *remote, sock_
          * */
         pdu.hdr->ver_t_tkl &= 0xf0;
 
+        DEBUG("gcoap: @@ calling `_tl_send()` (messagelayer_emptyresponse_type: %d)\n", messagelayer_emptyresponse_type);
         ssize_t bytes = _tl_send(sock, buf, sizeof(coap_hdr_t), remote, aux);
         if (bytes <= 0) {
             DEBUG("gcoap: empty response failed: %d\n", (int)bytes);

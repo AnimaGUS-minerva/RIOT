@@ -28,7 +28,8 @@
 #include "vfs.h"
 #include "vfs_util.h"
 
-#define ENABLE_DEBUG 0
+//@@#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1//@@
 #include "debug.h"
 
 /** Maximum length of an expressible path, including the trailing 0 character. */
