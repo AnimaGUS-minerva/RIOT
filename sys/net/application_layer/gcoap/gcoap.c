@@ -54,7 +54,9 @@
 #define TIMEOUT_RANGE_END (CONFIG_COAP_ACK_TIMEOUT_MS * CONFIG_COAP_RANDOM_FACTOR_1000 / 1000)
 
 extern void xbd_on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg);
+#if IS_USED(MODULE_GCOAP_DTLS)
 extern void xbd_on_sock_dtls_evt(sock_dtls_t *sock, sock_async_flags_t type, void *arg);
+#endif
 
 /* Internal functions */
 static void *_event_loop(void *arg);
