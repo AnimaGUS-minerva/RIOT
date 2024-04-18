@@ -53,10 +53,17 @@
 /* End of the range to pick a random timeout */
 #define TIMEOUT_RANGE_END (CONFIG_COAP_ACK_TIMEOUT_MS * CONFIG_COAP_RANDOM_FACTOR_1000 / 1000)
 
+extern void xbd_on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg);
+extern void xbd_on_sock_dtls_evt(sock_dtls_t *sock, sock_async_flags_t type, void *arg);
+
 /* Internal functions */
 static void *_event_loop(void *arg);
 static void _on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg);
-/*@@*/ void _on_sock_udp_evt_minerva(sock_udp_t *sock, sock_async_flags_t type, void *arg);
+/*@@*/ void _on_sock_udp_evt_minerva(sock_udp_t *sock, sock_async_flags_t type, void *arg) {
+    assert(sizeof(sock_async_flags_t) == sizeof(size_t));
+    DEBUG("gcoap: @@ _on_sock_udp_evt_minerva(): sock: %p type: %u arg: %p\n", (void *)sock, type, arg);
+    _on_sock_udp_evt(sock, type, arg);
+}
 static void _process_coap_pdu(gcoap_socket_t *sock, sock_udp_ep_t *remote, sock_udp_aux_tx_t *aux,
                               uint8_t *buf, size_t len, bool truncated);
 static int _tl_init_coap_socket(gcoap_socket_t *sock, gcoap_socket_type_t type);
@@ -96,6 +103,11 @@ static int _request_matcher_default(gcoap_listener_t *listener,
 
 #if IS_USED(MODULE_GCOAP_DTLS)
 static void _on_sock_dtls_evt(sock_dtls_t *sock, sock_async_flags_t type, void *arg);
+/*@@*/ void _on_sock_dtls_evt_minerva(sock_dtls_t *sock, sock_async_flags_t type, void *arg) {
+    assert(sizeof(sock_async_flags_t) == sizeof(size_t));
+    DEBUG("gcoap: @@ _on_sock_dtls_evt_minerva(): sock: %p type: %u arg: %p\n", (void *)sock, type, arg);
+    _on_sock_dtls_evt(sock, type, arg);
+}
 static void _dtls_free_up_session(void *arg);
 #endif
 
@@ -182,7 +194,8 @@ static void *_event_loop(void *arg)
     }
 
     event_queue_init(&_queue);
-    sock_udp_event_init(&_sock_udp, &_queue, _on_sock_udp_evt, NULL);
+    //sock_udp_event_init(&_sock_udp, &_queue, _on_sock_udp_evt, NULL);
+    sock_udp_event_init(&_sock_udp, &_queue, xbd_on_sock_udp_evt, NULL);
 
     if (IS_USED(MODULE_GCOAP_DTLS)) {
 #if IS_USED(MODULE_GCOAP_DTLS)
@@ -198,7 +211,8 @@ static void *_event_loop(void *arg)
             sock_udp_close(&_sock_dtls_base);
             return 0;
         }
-        sock_dtls_event_init(&_sock_dtls, &_queue, _on_sock_dtls_evt,
+        //sock_dtls_event_init(&_sock_dtls, &_queue, _on_sock_dtls_evt,
+        sock_dtls_event_init(&_sock_dtls, &_queue, xbd_on_sock_dtls_evt,
                             NULL);
 #endif
     }
@@ -308,17 +322,8 @@ static void _dtls_free_up_session(void *arg) {
 }
 #endif /* MODULE_GCOAP_DTLS */
 
-extern void xbd_on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg);
-
 /* Handles UDP socket events from the event queue. */
 static void _on_sock_udp_evt(sock_udp_t *sock, sock_async_flags_t type, void *arg) {
-#if 1//======== @@
-    DEBUG("gcoap: @@ _on_sock_udp_evt(): sock: %p type: %u arg: %p\n", (void *) sock, type, arg);
-    assert(sizeof(sock_async_flags_t) == sizeof(size_t));
-    xbd_on_sock_udp_evt(sock, type, arg);
-}
-void _on_sock_udp_evt_minerva(sock_udp_t *sock, sock_async_flags_t type, void *arg) {
-#endif//======== @@
     (void)arg;
     sock_udp_ep_t remote;
 
