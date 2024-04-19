@@ -111,6 +111,10 @@ static void _on_sock_dtls_evt(sock_dtls_t *sock, sock_async_flags_t type, void *
     _on_sock_dtls_evt(sock, type, arg);
 }
 static void _dtls_free_up_session(void *arg);
+#else
+/*@@*/ void _on_sock_dtls_evt_minerva(/*SHIM*/void *sock, sock_async_flags_t type, void *arg) {
+    (void)sock; (void)type; (void)arg; assert(0);
+}
 #endif
 
 /* Internal variables */
