@@ -515,3 +515,7 @@ void shell_run_once(const shell_command_t *shell_commands,
         print_prompt();
     }
 }
+
+void handle_input_line_minerva(const shell_command_t *command_list, char *line) {//@@ external
+    handle_input_line(command_list, line);
+}
