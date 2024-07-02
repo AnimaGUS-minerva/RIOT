@@ -21,11 +21,20 @@
  */
 
 /*
- * Copyright (C) 2023 ANIMA Minerva toolkit
+ * Copyright (C) 2024 ANIMA Minerva toolkit
  */
 
 #include "net/sock/util.h"
-#include "minerva_xbd.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "fmt.h"
+#include "net/gcoap.h"
+#include "net/utils.h"
+#include "od.h"
 
 extern size_t xbd_blockwise_state_index(void);
 extern char * xbd_blockwise_addr_ptr(size_t idx);
@@ -39,7 +48,18 @@ extern void xbd_blockwise_async_gcoap_next(
         const char *hdr, size_t hdr_len);
 extern void xbd_blockwise_async_gcoap_complete(size_t idx);
 
-static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gcoap_resp_handler_t resp_handler) //@@
+static gcoap_socket_type_t _get_tl(const char *uri)
+{
+    if (!strncmp(uri, "coaps", 5)) {
+        return GCOAP_SOCKET_TYPE_DTLS;
+    }
+    else if (!strncmp(uri, "coap", 4)) {
+        return GCOAP_SOCKET_TYPE_UDP;
+    }
+    return GCOAP_SOCKET_TYPE_UNDEF;
+}
+
+static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gcoap_socket_type_t tl, gcoap_resp_handler_t resp_handler) //@@
 {
     size_t bytes_sent;
     sock_udp_ep_t *remote;
@@ -66,10 +86,10 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gco
 //    }
 
     //@@bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, NULL);
-    bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context);//@@
-    if (bytes_sent > 0) {
-        req_count++;
-    }
+    bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);//@@
+//    if (bytes_sent > 0) {
+//        req_count++;
+//    }
     return bytes_sent;
 }
 
@@ -104,11 +124,12 @@ void xbd_gcoap_req_send(
         memcpy(buf + hdr_len /* (== `pdu.payload`) */, payload, payload_len);
     }
 
-    if (!_send(&buf[0], hdr_len + payload_len, addr, context, resp_handler)) {
+    gcoap_socket_type_t tl = _get_tl(uri);
+    if (!_send(&buf[0], hdr_len + payload_len, addr, context, tl, resp_handler)) {
         puts("gcoap_cli: msg send failed");
     } else {
         /* send Observe notification for /cli/stats */
-        notify_observers();
+//        notify_observers();
     }
 }
 
