@@ -59,6 +59,9 @@ static gcoap_socket_type_t _get_tl(const char *uri)
     return GCOAP_SOCKET_TYPE_UNDEF;
 }
 
+static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu, // !!!! per `emulate_sync_gcoap_get()`
+                          const sock_udp_ep_t *remote);                      // !!!!
+
 static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gcoap_socket_type_t tl, gcoap_resp_handler_t resp_handler) //@@
 {
     size_t bytes_sent;
@@ -86,7 +89,12 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gco
 //    }
 
     //@@bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, NULL);
-    bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);//@@
+    //==== @@
+    //bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);
+    //==== @@ !!!! per `emulate_sync_gcoap_get()`
+    (void)resp_handler;
+    bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, context, tl);
+    //====
 //    if (bytes_sent > 0) {
 //        req_count++;
 //    }
