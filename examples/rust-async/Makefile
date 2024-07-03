@@ -24,6 +24,9 @@ USEMODULE += shell
 USEMODULE += shell_cmds_default
 USEMODULE += ps
 
+# for gcoap.rs
+USEMODULE += od
+
 # for the "vfs" feature of riot-coap-handler-demos (and vfs.c)
 USEMODULE += vfs
 USEMODULE += constfs
