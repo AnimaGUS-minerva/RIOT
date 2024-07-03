@@ -39,7 +39,8 @@
 extern size_t xbd_blockwise_state_index(void);
 extern char * xbd_blockwise_addr_ptr(size_t idx);
 extern char * xbd_blockwise_uri_ptr(size_t idx);
-extern size_t xbd_blockwise_hdr_copy(const uint8_t *buf, size_t buf_sz, size_t idx);
+//extern size_t xbd_blockwise_hdr_copy(const uint8_t *buf, size_t buf_sz, size_t idx);
+/* !!!! SHIM */static size_t xbd_blockwise_hdr_copy(const uint8_t *buf, size_t buf_sz, size_t idx) { (void)buf;  (void)buf_sz;  (void)idx;   assert(0); }
 
 extern void xbd_blockwise_async_gcoap_next(
         size_t idx,
