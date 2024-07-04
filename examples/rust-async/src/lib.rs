@@ -10,6 +10,9 @@ mod runtime;
 
 mod server;
 
+mod blockwise;
+mod gcoap;
+
 mod shell;
 mod alias;
 

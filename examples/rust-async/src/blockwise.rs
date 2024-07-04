@@ -1,6 +1,6 @@
-use mcu_if::c_types::c_void;
-use mcu_if::utils::{u8_slice_from, u8_slice_mut_from};
+use core::ffi::c_void;
 use heapless::Vec;
+use super::util::{u8_slice_from, u8_slice_mut_from};
 use super::stream::{XStream, XStreamData};
 use super::gcoap::{Req, REQ_ADDR_MAX, REQ_URI_MAX};
 use crate::static_borrow_mut;

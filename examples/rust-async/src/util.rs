@@ -5,6 +5,14 @@ pub fn to_raw<T>(x: &mut T) -> *mut () { x as *mut _ as _ }
 pub fn static_from_raw<T>(p: *mut ()) -> &'static mut T { unsafe { core::mem::transmute(p) } }
 pub fn get_static<T>(x: &mut T) -> &'static mut T { static_from_raw(to_raw(x)) }
 
+pub fn u8_slice_from(ptr: *const u8, sz: usize) -> &'static [u8] {
+    unsafe { core::slice::from_raw_parts(ptr, sz) }
+}
+
+pub fn u8_slice_mut_from(ptr: *mut u8, sz: usize) -> &'static mut [u8] {
+    unsafe { core::slice::from_raw_parts_mut(ptr, sz) }
+}
+
 pub async fn sleep_msec(ms: u32) {
     use riot_wrappers::ztimer::*;
 

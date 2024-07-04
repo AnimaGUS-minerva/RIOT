@@ -1,8 +1,9 @@
 use core::{future::Future, pin::Pin, task::{Context, Poll, Waker}};
-use core::ffi::c_void;
 use futures_util::task::AtomicWaker;
+
+use core::{ffi::c_void, convert::TryFrom};
 use heapless::{Vec, String};
-use mcu_if::utils::u8_slice_from;
+use super::util::u8_slice_from;
 
 pub const REQ_ADDR_MAX: usize = 64;
 pub const REQ_URI_MAX: usize = 64;
