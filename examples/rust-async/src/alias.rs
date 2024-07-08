@@ -46,7 +46,32 @@ async fn test_async_timeout() {
 
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
-    emulate_sync_gcoap_get(); // !!!!
+
+    if 0 == 1 { emulate_sync_gcoap_get(); return; }
+
+    {
+        use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
+
+        println!("-------- out-0:");
+        println!("{:?}", gcoap_get("[::1]", "/.well-known/core").await);
+        // !!!! FIXME wrong modality  <<<< --- blockwise start ---
+/*
+        println!("-------- out-1:");
+        println!("{:?}", gcoap_get("[::1]", "/cli/stats").await);
+
+        let addr_self = "[::1]:5683";
+        println!("-------- out-2:");
+        let _ = gcoap_post(addr_self, "/cli/stats", b"3000").await;
+        println!("{:?}", gcoap_get(addr_self, "/cli/stats").await);
+        println!("-------- out-3:");
+        let _ = gcoap_put(addr_self, "/cli/stats", b"1000").await;
+        println!("{:?}", gcoap_get(addr_self, "/cli/stats").await);
+*/
+    }
+}
+
+async fn test_async_gcoap_blockwise() {
+    todo!();
 }
 
 fn emulate_sync_gcoap_get() {
