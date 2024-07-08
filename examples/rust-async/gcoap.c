@@ -93,7 +93,7 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gco
     //bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);
     //==== @@ !!!! per `emulate_sync_gcoap_get()`
     (void)resp_handler;
-    bytes_sent = gcoap_req_send_async(buf, len, remote, _resp_handler, context, tl);
+    bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, context, tl);
     //====
 //    if (bytes_sent > 0) {
 //        req_count++;
