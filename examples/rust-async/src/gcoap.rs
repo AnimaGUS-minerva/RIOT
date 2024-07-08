@@ -292,7 +292,7 @@ fn gcoap_req(addr: &str, uri: &str, method: CoapMethod,
     fstat_ptr: *mut FutureState<GcoapMemoState>) {
 
     extern "C" {
-        fn xbd_gcoap_req_send(
+        fn gcoap_req_send_async(
             addr: *const u8, uri: *const u8, method: u8,
             payload: *const u8, payload_len: usize,
             blockwise: bool, idx: usize,
@@ -311,7 +311,7 @@ fn gcoap_req(addr: &str, uri: &str, method: CoapMethod,
     uri_cstr.push('\0').unwrap();
 
     assert_eq!(blockwise, blockwise_state_index.is_some());
-    unsafe { xbd_gcoap_req_send(
+    unsafe { gcoap_req_send_async(
         addr_cstr.as_ptr(),
         uri_cstr.as_ptr(),
         method, payload_ptr, payload_len,
@@ -322,7 +322,7 @@ fn gcoap_req(addr: &str, uri: &str, method: CoapMethod,
 
 fn gcoap_req_resp_handler(memo: *const c_void, pdu: *const c_void, remote: *const c_void) {
     extern "C" {
-        fn xbd_resp_handler(
+        fn async_resp_handler(
             memo: *const c_void, pdu: *const c_void, remote: *const c_void,
             payload: *mut c_void, payload_len: *mut c_void, context: *mut c_void) -> u8;
     }
@@ -332,7 +332,7 @@ fn gcoap_req_resp_handler(memo: *const c_void, pdu: *const c_void, remote: *cons
     let mut payload_len: usize = 0;
 
     let memo_state = unsafe {
-        xbd_resp_handler(
+        async_resp_handler(
             memo, pdu, remote,
             (&mut payload_ptr) as *mut *const u8 as *mut c_void,
             (&mut payload_len) as *mut usize as *mut c_void,

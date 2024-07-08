@@ -6,22 +6,22 @@ use super::gcoap::{Req, REQ_ADDR_MAX, REQ_URI_MAX};
 use crate::static_borrow_mut;
 
 #[no_mangle]
-pub extern fn xbd_blockwise_state_index() -> usize {
+pub extern fn blockwise_state_index() -> usize {
     BlockwiseData::get_state_last()
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_addr_ptr(idx: usize) -> *const c_void {
+pub extern fn blockwise_addr_ptr(idx: usize) -> *const c_void {
     BlockwiseData::state(&idx).unwrap().addr.as_ptr() as _
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_uri_ptr(idx: usize) -> *const c_void {
+pub extern fn blockwise_uri_ptr(idx: usize) -> *const c_void {
     BlockwiseData::state(&idx).unwrap().uri.as_ptr() as _
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_hdr_copy(buf: *mut u8, buf_sz: usize, idx: usize) -> usize {
+pub extern fn blockwise_hdr_copy(buf: *mut u8, buf_sz: usize, idx: usize) -> usize {
     let BlockwiseState { hdr, hdr_len, .. } =
         BlockwiseData::state(&idx).unwrap();
     let len = *hdr_len;
@@ -35,7 +35,7 @@ pub extern fn xbd_blockwise_hdr_copy(buf: *mut u8, buf_sz: usize, idx: usize) ->
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_gcoap_next(
+pub extern fn blockwise_gcoap_next(
     idx: usize,
     addr: *const c_void, addr_len: usize,
     uri: *const c_void, uri_len: usize,
@@ -50,7 +50,7 @@ pub extern fn xbd_blockwise_gcoap_next(
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_gcoap_complete(idx: usize) {
+pub extern fn blockwise_gcoap_complete(idx: usize) {
     let _ = BlockwiseData::send_blockwise_req(Some(idx), None, None);
 }
 

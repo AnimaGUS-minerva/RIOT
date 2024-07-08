@@ -52,7 +52,7 @@ async fn test_async_gcoap() {
 fn emulate_sync_gcoap_get() {
     use core::ffi::c_void;
     extern "C" {
-        fn xbd_gcoap_req_send(
+        fn gcoap_req_send_async(
             addr: *const u8, uri: *const u8, method: u8,
             payload: *const u8, payload_len: usize,
             blockwise: bool, idx: usize,
@@ -80,7 +80,7 @@ fn emulate_sync_gcoap_get() {
     let blockwise = false;
     let blockwise_state_index = None;
 
-    unsafe { xbd_gcoap_req_send(
+    unsafe { gcoap_req_send_async(
         addr_cstr.as_ptr(),
         uri_cstr.as_ptr(),
         0x01 /* COAP_METHOD_GET */, payload_ptr, payload_len,

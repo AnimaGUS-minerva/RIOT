@@ -36,17 +36,17 @@
 #include "net/utils.h"
 #include "od.h"
 
-extern size_t xbd_blockwise_state_index(void);
-extern char * xbd_blockwise_addr_ptr(size_t idx);
-extern char * xbd_blockwise_uri_ptr(size_t idx);
-extern size_t xbd_blockwise_hdr_copy(const uint8_t *buf, size_t buf_sz, size_t idx);
+extern size_t blockwise_state_index(void);
+extern char * blockwise_addr_ptr(size_t idx);
+extern char * blockwise_uri_ptr(size_t idx);
+extern size_t blockwise_hdr_copy(const uint8_t *buf, size_t buf_sz, size_t idx);
 
-extern void xbd_blockwise_gcoap_next(
+extern void blockwise_gcoap_next(
         size_t idx,
         const char *addr, size_t addr_len,
         const char *uri, size_t uri_len,
         const char *hdr, size_t hdr_len);
-extern void xbd_blockwise_gcoap_complete(size_t idx);
+extern void blockwise_gcoap_complete(size_t idx);
 
 static gcoap_socket_type_t _get_tl(const char *uri)
 {
@@ -93,7 +93,7 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gco
     //bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);
     //==== @@ !!!! per `emulate_sync_gcoap_get()`
     (void)resp_handler;
-    bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, context, tl);
+    bytes_sent = gcoap_req_send_async(buf, len, remote, _resp_handler, context, tl);
     //====
 //    if (bytes_sent > 0) {
 //        req_count++;
@@ -101,7 +101,7 @@ static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gco
     return bytes_sent;
 }
 
-void xbd_gcoap_req_send(
+void gcoap_req_send_async(
         char *addr, char *uri,
         uint8_t method, uint8_t *payload, size_t payload_len,
         bool blockwise, size_t idx,
@@ -109,7 +109,7 @@ void xbd_gcoap_req_send(
     uint8_t buf[CONFIG_GCOAP_PDU_BUF_SIZE];
     size_t hdr_len;
 
-    if (blockwise && (hdr_len = xbd_blockwise_hdr_copy(&buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, idx))) {
+    if (blockwise && (hdr_len = blockwise_hdr_copy(&buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, idx))) {
         printf("@@ sending non-first msg (idx=%u)\n", idx);
     } else {
         coap_pkt_t pdu;
@@ -121,7 +121,7 @@ void xbd_gcoap_req_send(
 
         printf("@@ sending msg (ID=%u)\n", coap_get_id(&pdu));
     }
-    printf("@@ xbd_gcoap_req_send(): addr: %s, uri: %s hdr_len: %u\n", addr, uri, hdr_len);
+    printf("@@ gcoap_req_send(): addr: %s, uri: %s hdr_len: %u\n", addr, uri, hdr_len);
 
     if (blockwise) {
         printf("@@ debug - blockwise_state_index: %u\n", idx);
@@ -194,11 +194,11 @@ static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
 
 static void _resp_handler_blockwise_async(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
                                           const sock_udp_ep_t *remote, coap_block1_t *block) {
-    size_t idx = xbd_blockwise_state_index();
+    size_t idx = blockwise_state_index();
 
     if (block->more) {
-        char *last_addr = xbd_blockwise_addr_ptr(idx);
-        char *last_uri = xbd_blockwise_uri_ptr(idx);
+        char *last_addr = blockwise_addr_ptr(idx);
+        char *last_uri = blockwise_uri_ptr(idx);
 
         size_t last_uri_len = strlen(last_uri);
 
@@ -231,17 +231,17 @@ static void _resp_handler_blockwise_async(const gcoap_request_memo_t *memo, coap
         (void)memo;
         (void)remote;
         size_t len = coap_opt_finish(pdu, COAP_OPT_FINISH_NONE);
-        xbd_blockwise_gcoap_next(idx,
+        blockwise_gcoap_next(idx,
                 last_addr, strlen(last_addr),
                 last_uri, last_uri_len,
                 (char *)pdu->hdr, len);
     } else {
         puts("--- blockwise complete ---");
-        xbd_blockwise_gcoap_complete(idx);
+        blockwise_gcoap_complete(idx);
     }
 }
 
-uint8_t xbd_resp_handler(
+uint8_t async_resp_handler(
         const gcoap_request_memo_t *memo, coap_pkt_t* pdu, const sock_udp_ep_t *remote,
         uint8_t **payload, size_t *payload_len, void **context
 ) {
