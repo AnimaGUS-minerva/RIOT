@@ -35,7 +35,7 @@ pub extern fn xbd_blockwise_hdr_copy(buf: *mut u8, buf_sz: usize, idx: usize) ->
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_async_gcoap_next(
+pub extern fn xbd_blockwise_gcoap_next(
     idx: usize,
     addr: *const c_void, addr_len: usize,
     uri: *const c_void, uri_len: usize,
@@ -50,7 +50,7 @@ pub extern fn xbd_blockwise_async_gcoap_next(
 }
 
 #[no_mangle]
-pub extern fn xbd_blockwise_async_gcoap_complete(idx: usize) {
+pub extern fn xbd_blockwise_gcoap_complete(idx: usize) {
     let _ = BlockwiseData::send_blockwise_req(Some(idx), None, None);
 }
 
