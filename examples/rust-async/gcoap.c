@@ -59,89 +59,7 @@ static gcoap_socket_type_t _get_tl(const char *uri)
     return GCOAP_SOCKET_TYPE_UNDEF;
 }
 
-static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu, // !!!! per `emulate_sync_gcoap_get()`
-                          const sock_udp_ep_t *remote);                      // !!!!
-
-static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gcoap_socket_type_t tl, gcoap_resp_handler_t resp_handler) //@@
-{
-    size_t bytes_sent;
-    sock_udp_ep_t *remote;
-    sock_udp_ep_t new_remote;
-
-//    if (_proxied) {
-//        remote = &_proxy_remote;
-//    }
-//    else {
-        if (sock_udp_name2ep(&new_remote, addr_str) != 0) {
-            return 0;
-        }
-
-        if (new_remote.port == 0) {
-            if (IS_USED(MODULE_GCOAP_DTLS)) {
-                new_remote.port = CONFIG_GCOAPS_PORT;
-            }
-            else {
-                new_remote.port = CONFIG_GCOAP_PORT;
-            }
-        }
-
-        remote = &new_remote;
-//    }
-
-    //@@bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, NULL);
-    //==== @@
-    //bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);
-    //==== @@ !!!! per `emulate_sync_gcoap_get()`
-    (void)resp_handler;
-    bytes_sent = gcoap_req_send(buf, len, remote, _resp_handler, context, tl);
-    //====
-//    if (bytes_sent > 0) {
-//        req_count++;
-//    }
-    return bytes_sent;
-}
-
-void gcoap_req_send_async(
-        char *addr, char *uri,
-        uint8_t method, uint8_t *payload, size_t payload_len,
-        bool blockwise, size_t idx,
-        void *context, gcoap_resp_handler_t resp_handler) {
-    uint8_t buf[CONFIG_GCOAP_PDU_BUF_SIZE];
-    size_t hdr_len;
-
-    if (blockwise && (hdr_len = blockwise_hdr_copy(&buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, idx))) {
-        printf("@@ sending non-first msg (idx=%u)\n", idx);
-    } else {
-        coap_pkt_t pdu;
-        gcoap_req_init(&pdu, &buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, method, uri);
-
-        unsigned msg_type = COAP_TYPE_NON;
-        coap_hdr_set_type(pdu.hdr, msg_type);
-        hdr_len = coap_opt_finish(&pdu, payload_len ? COAP_OPT_FINISH_PAYLOAD : COAP_OPT_FINISH_NONE);
-
-        printf("@@ sending msg (ID=%u)\n", coap_get_id(&pdu));
-    }
-    printf("@@ gcoap_req_send(): addr: %s, uri: %s hdr_len: %u\n", addr, uri, hdr_len);
-
-    if (blockwise) {
-        printf("@@ debug - blockwise_state_index: %u\n", idx);
-    }
-
-    printf("@@ payload: %p payload_len: %d\n", payload, payload_len);
-    if (payload_len) {
-        memcpy(buf + hdr_len /* (== `pdu.payload`) */, payload, payload_len);
-    }
-
-    gcoap_socket_type_t tl = _get_tl(uri);
-    if (!_send(&buf[0], hdr_len + payload_len, addr, context, tl, resp_handler)) {
-        puts("gcoap_cli: msg send failed");
-    } else {
-        /* send Observe notification for /cli/stats */
-//        notify_observers();
-    }
-}
-
-static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
+static void inner_resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
                           const sock_udp_ep_t *remote)
 {
     (void)remote;       /* not interested in the source currently */
@@ -189,6 +107,86 @@ static void _resp_handler(const gcoap_request_memo_t *memo, coap_pkt_t* pdu,
     }
     else {
         printf(", empty payload\n");
+    }
+}
+
+static size_t _send(uint8_t *buf, size_t len, char *addr_str, void *context, gcoap_socket_type_t tl, gcoap_resp_handler_t resp_handler) //@@
+{
+    size_t bytes_sent;
+    sock_udp_ep_t *remote;
+    sock_udp_ep_t new_remote;
+
+//    if (_proxied) {
+//        remote = &_proxy_remote;
+//    }
+//    else {
+        if (sock_udp_name2ep(&new_remote, addr_str) != 0) {
+            return 0;
+        }
+
+        if (new_remote.port == 0) {
+            if (IS_USED(MODULE_GCOAP_DTLS)) {
+                new_remote.port = CONFIG_GCOAPS_PORT;
+            }
+            else {
+                new_remote.port = CONFIG_GCOAP_PORT;
+            }
+        }
+
+        remote = &new_remote;
+//    }
+
+    //==== @@
+    if (resp_handler == NULL) { // !! per `emulate_sync_gcoap_get()`
+        return gcoap_req_send(buf, len, remote, inner_resp_handler, context, tl);
+    }
+    //==== @@
+    bytes_sent = gcoap_req_send(buf, len, remote, resp_handler, context, tl);
+//    if (bytes_sent > 0) {
+//        req_count++;
+//    }
+    //====
+
+    return bytes_sent;
+}
+
+void gcoap_req_send_async(
+        char *addr, char *uri,
+        uint8_t method, uint8_t *payload, size_t payload_len,
+        bool blockwise, size_t idx,
+        void *context, gcoap_resp_handler_t resp_handler) {
+    uint8_t buf[CONFIG_GCOAP_PDU_BUF_SIZE];
+    size_t hdr_len;
+
+    if (blockwise && (hdr_len = blockwise_hdr_copy(&buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, idx))) {
+        printf("@@ sending non-first msg (idx=%u)\n", idx);
+    } else {
+        coap_pkt_t pdu;
+        gcoap_req_init(&pdu, &buf[0], CONFIG_GCOAP_PDU_BUF_SIZE, method, uri);
+
+        unsigned msg_type = COAP_TYPE_NON;
+        coap_hdr_set_type(pdu.hdr, msg_type);
+        hdr_len = coap_opt_finish(&pdu, payload_len ? COAP_OPT_FINISH_PAYLOAD : COAP_OPT_FINISH_NONE);
+
+        printf("@@ sending msg (ID=%u)\n", coap_get_id(&pdu));
+    }
+    printf("@@ gcoap_req_send(): addr: %s, uri: %s hdr_len: %u\n", addr, uri, hdr_len);
+
+    if (blockwise) {
+        printf("@@ debug - blockwise_state_index: %u\n", idx);
+    }
+
+    printf("@@ payload: %p payload_len: %d\n", payload, payload_len);
+    if (payload_len) {
+        memcpy(buf + hdr_len /* (== `pdu.payload`) */, payload, payload_len);
+    }
+
+    gcoap_socket_type_t tl = _get_tl(uri);
+    if (!_send(&buf[0], hdr_len + payload_len, addr, context, tl, resp_handler)) {
+        puts("gcoap_cli: msg send failed");
+    } else {
+        /* send Observe notification for /cli/stats */
+//        notify_observers();
     }
 }
 
@@ -245,7 +243,7 @@ uint8_t async_resp_handler(
         const gcoap_request_memo_t *memo, coap_pkt_t* pdu, const sock_udp_ep_t *remote,
         uint8_t **payload, size_t *payload_len, void **context
 ) {
-    _resp_handler(memo, pdu, remote);
+    inner_resp_handler(memo, pdu, remote);
 
     *context = memo->context;
 
