@@ -45,3 +45,14 @@ pub async fn start() {
 
     panic!("should be never reached");
 }
+
+pub async fn start_fixture() {
+    use riot_wrappers::println;
+
+    extern "C" {
+        fn server_init();
+    }
+
+    unsafe { server_init() };
+    println!("CoAP test FIXTURE server ready");
+}
