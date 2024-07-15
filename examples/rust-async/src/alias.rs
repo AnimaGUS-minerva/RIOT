@@ -10,6 +10,7 @@ pub const TABLE_ALIAS_ENUMERATED: &[&str] = &[
     "version",
     "ifconfig",
     "ping ::1",
+    "coap get coap://[::1]/.well-known/core", // !!
 ];
 
 pub const TABLE_ALIAS_FUNCTION: &[&str] = &[
@@ -47,7 +48,10 @@ async fn test_async_timeout() {
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
-    if 1 == 1 { emulate_sync_gcoap_get(); return; }
+    if 1 == 1 { // TODO auto-handle blockwise context (like alias [3])
+        emulate_sync_gcoap_get();
+        return;
+    }
 
     {
         use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
