@@ -26,6 +26,8 @@ USEMODULE += ps
 
 # for gcoap.rs
 USEMODULE += od
+
+# for gcoap_c
 USEMODULE += uri_parser
 
 # for the "vfs" feature of riot-coap-handler-demos (and vfs.c)
@@ -66,5 +68,5 @@ BOARD_BLACKLIST := ek-lm4f120xl
 
 include $(RIOTBASE)/Makefile.include
 
-DIRS += tests
-USEMODULE += tests
+DIRS += gcoap_c
+USEMODULE += gcoap_c

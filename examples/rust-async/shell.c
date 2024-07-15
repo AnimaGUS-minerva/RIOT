@@ -67,9 +67,12 @@ void async_shell_prompt(char *tag, bool highlight) {
     }
 }
 
+#include "gcoap_c/gcoap_example.h" // !!
+
 // for RIOT-c app commands
 static const shell_command_t app_commands[] = {
     // { "gcoap", "CoAP example", gcoap_cli_cmd }, // for example
+    { "coap", "CoAP example", gcoap_cli_cmd }, // !!
     { NULL, NULL, NULL }
 };
 
