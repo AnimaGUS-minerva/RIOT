@@ -26,6 +26,7 @@ USEMODULE += ps
 
 # for gcoap.rs
 USEMODULE += od
+USEMODULE += uri_parser
 
 # for the "vfs" feature of riot-coap-handler-demos (and vfs.c)
 USEMODULE += vfs
@@ -64,3 +65,6 @@ FEATURES_REQUIRED += rust_target
 BOARD_BLACKLIST := ek-lm4f120xl
 
 include $(RIOTBASE)/Makefile.include
+
+DIRS += tests
+USEMODULE += tests
