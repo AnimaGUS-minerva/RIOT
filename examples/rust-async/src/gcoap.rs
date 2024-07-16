@@ -34,9 +34,11 @@ const GCOAP_MEMO_RESP_TRUNC: u8 =  0x06;
 #[derive(Debug, PartialEq)]
 pub enum GcoapMemoState {
     Resp(Option<PayloadOut>),
+    // Resp(Option<PayloadOut>, Option<blockwise>), !!!! per gcoap_get_auto_wip()
     Timeout,
     Err,
     RespTrunc(Option<PayloadOut>),
+    // RespTrunc(Option<PayloadOut>, Option<blockwise>), !!!! per gcoap_get_auto_wip()
 }
 
 impl GcoapMemoState {
