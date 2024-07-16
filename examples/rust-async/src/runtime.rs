@@ -11,7 +11,7 @@ async fn task_main() {
 #[embassy_executor::task]
 async fn task_server() {
     println!("task_server(): starting");
-    if 0 == 1 {
+    if 1 == 1 {
         crate::server::start_fixture().await; // !! for debug/tests
     } else {
         crate::server::start().await;

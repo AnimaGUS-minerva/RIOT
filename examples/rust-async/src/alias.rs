@@ -49,7 +49,7 @@ async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
     if 0 == 1 { // NO auto-handle blockwise context (like alias [3])
-        emulate_sync_gcoap_get();
+        emulate_sync_gcoap_get("[::1]", "/.well-known/core");
         return;
     }
 
@@ -85,7 +85,9 @@ async fn test_async_gcoap_blockwise() {
     todo!();
 }
 
-fn emulate_sync_gcoap_get() {
+//
+
+fn emulate_sync_gcoap_get(addr: &str, uri: &str) {
     use core::ffi::c_void;
     extern "C" {
         fn gcoap_req_send_async(
@@ -95,19 +97,15 @@ fn emulate_sync_gcoap_get() {
             context: *const c_void, resp_handler: *const c_void);
     }
 
-    //
-    // emulate "coap get coap://[::1]/.well-known/core"
-    //
-
     const REQ_ADDR_MAX: usize = 64;
     const REQ_URI_MAX: usize = 64;
 
     let mut addr_cstr = heapless::String::<{ REQ_ADDR_MAX + 1 }>::new();
-    addr_cstr.push_str("[::1]").unwrap();
+    addr_cstr.push_str(addr).unwrap();
     addr_cstr.push('\0').unwrap();
 
     let mut uri_cstr = heapless::String::<{ REQ_URI_MAX + 1 }>::new();
-    uri_cstr.push_str("/.well-known/core").unwrap();
+    uri_cstr.push_str(uri).unwrap();
     uri_cstr.push('\0').unwrap();
 
     let payload_ptr: *const u8 = core::ptr::null();
@@ -127,14 +125,24 @@ fn emulate_sync_gcoap_get() {
 }
 
 async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
-    use super::gcoap::{gcoap_get, gcoap_get_blockwise};
+    use super::gcoap::gcoap_get_blockwise;
     use super::stream::StreamExt;
 
+    let mut bs = gcoap_get_blockwise(addr, uri).unwrap();
 
-    // TODO determine blockwise-ness
+    if let Some(req) = bs.next().await {
+        let first = req.await;
+        println!("@@ first: {:?}", first);
 
-    let mut bs = gcoap_get_blockwise("[::1]", "/.well-known/core").unwrap();
-    while let Some(req) = bs.next().await {
-        println!("@@ out: {:?}", req.await);
+        println!("@@ TODO determine blockwise-ness from `first`");
+        let blockwise = false; // !!!! [ ] crate::server::start_fixture().await; in task_server()
+        //let blockwise = true; // !!!! [ ] crate::server::start().await; in task_server()
+
+        println!("@@ blockwise: {}", blockwise);
+        if blockwise {
+            while let Some(req) = bs.next().await {
+                println!("@@ cont: {:?}", req.await);
+            }
+        }
     }
 }
