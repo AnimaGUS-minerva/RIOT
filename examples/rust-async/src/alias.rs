@@ -48,8 +48,13 @@ async fn test_async_timeout() {
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
-    if 1 == 1 { // TODO auto-handle blockwise context (like alias [3])
+    if 0 == 1 { // NO auto-handle blockwise context (like alias [3])
         emulate_sync_gcoap_get();
+        return;
+    }
+
+    if 1 == 1 { // WIP !!!! auto-handle blockwise context (like alias [3])
+        gcoap_get_auto_wip("[::1]", "/.well-known/core").await;
         return;
     }
 
@@ -59,6 +64,8 @@ async fn test_async_gcoap() {
         println!("-------- out-0:");
         println!("{:?}", gcoap_get("[::1]", "/.well-known/core").await);
         // !!!! FIXME wrong modality  <<<< --- blockwise start ---
+        // TODO auto-handle blockwise context (like alias [3])
+
 /*
         println!("-------- out-1:");
         println!("{:?}", gcoap_get("[::1]", "/cli/stats").await);
@@ -116,5 +123,18 @@ fn emulate_sync_gcoap_get() {
         blockwise, blockwise_state_index.unwrap_or(0 /* to be ignored */),
         core::ptr::null(), // !!!! fstat_ptr as *const c_void, // context
         core::ptr::null()); // !!!! gcoap_req_resp_handler as *const c_void);
+    }
+}
+
+async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
+    use super::gcoap::{gcoap_get, gcoap_get_blockwise};
+    use super::stream::StreamExt;
+
+
+    // TODO determine blockwise-ness
+
+    let mut bs = gcoap_get_blockwise("[::1]", "/.well-known/core").unwrap();
+    while let Some(req) = bs.next().await {
+        println!("@@ out: {:?}", req.await);
     }
 }
