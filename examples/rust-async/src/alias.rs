@@ -145,4 +145,6 @@ async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
             }
         }
     }
+
+    bs.close();
 }
