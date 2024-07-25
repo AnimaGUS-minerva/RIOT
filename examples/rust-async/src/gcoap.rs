@@ -11,9 +11,6 @@ pub const REQ_URI_MAX: usize = 64;
 const PAYLOAD_REQ_MAX: usize = 48;
 const PAYLOAD_OUT_MAX: usize = 128;
 
-type PayloadReq = Vec<u8, PAYLOAD_REQ_MAX>;
-type PayloadOut = Vec<u8, PAYLOAD_OUT_MAX>;
-
 //
 // gcoap client
 //
@@ -31,25 +28,35 @@ const GCOAP_MEMO_TIMEOUT: u8 =     0x04;
 const GCOAP_MEMO_ERR: u8 =         0x05;
 const GCOAP_MEMO_RESP_TRUNC: u8 =  0x06;
 
+type IsBlockwise = bool;
+type PayloadOut = Vec<u8, PAYLOAD_OUT_MAX>;
+
 #[derive(Debug, PartialEq)]
 pub enum GcoapMemoState {
-    Resp(Option<PayloadOut>),
-    // Resp(Option<PayloadOut>, Option<blockwise>), !!!! per gcoap_get_auto_wip()
-    Timeout,
-    Err,
-    RespTrunc(Option<PayloadOut>),
-    // RespTrunc(Option<PayloadOut>, Option<blockwise>), !!!! per gcoap_get_auto_wip()
+    Resp(IsBlockwise, Option<PayloadOut>),
+    Timeout(IsBlockwise),
+    Err(IsBlockwise),
+    RespTrunc(IsBlockwise, Option<PayloadOut>),
 }
 
 impl GcoapMemoState {
-    pub fn new(memo_state: u8, payload: Option<PayloadOut>) -> Self {
+    pub fn new(memo_state: u8, blockwise: bool, payload: Option<PayloadOut>) -> Self {
         match memo_state {
             // ...
-            GCOAP_MEMO_RESP => Self::Resp(payload),
-            GCOAP_MEMO_TIMEOUT => Self::Timeout,
-            GCOAP_MEMO_ERR => Self::Err,
-            GCOAP_MEMO_RESP_TRUNC => Self::RespTrunc(payload),
+            GCOAP_MEMO_RESP => Self::Resp(blockwise, payload),
+            GCOAP_MEMO_TIMEOUT => Self::Timeout(blockwise),
+            GCOAP_MEMO_ERR => Self::Err(blockwise),
+            GCOAP_MEMO_RESP_TRUNC => Self::RespTrunc(blockwise, payload),
             _ => unreachable!(),
+        }
+    }
+
+    pub fn is_blockwise(&self) -> bool {
+        match self {
+            Self::Resp(x, _) => *x,
+            Self::Timeout(x) => *x,
+            Self::Err(x) => *x,
+            Self::RespTrunc(x, _) => *x,
         }
     }
 }
@@ -109,6 +116,8 @@ pub enum Req {
     Post(ReqInner),
     Put(ReqInner),
 }
+
+type PayloadReq = Vec<u8, PAYLOAD_REQ_MAX>;
 
 impl Req {
     pub fn new(method: CoapMethod, addr: &str, uri: &str, payload: Option<PayloadReq>) -> Self {
@@ -251,7 +260,7 @@ impl Future for ReqInner {
                             gcoap_get_blockwise_inner(&self.addr, &self.uri, idx, fstat_ptr);
                         } else { // blockwise stream could be already closed
                             BlockwiseData::set_state_last(None);
-                            return Poll::Ready(GcoapMemoState::Err)
+                            return Poll::Ready(GcoapMemoState::Err(false))
                         }
                     },
                     COAP_METHOD_GET if !self.blockwise => gcoap_get_inner(
@@ -349,6 +358,10 @@ fn gcoap_req_resp_handler(memo: *const c_void, pdu: *const c_void, remote: *cons
         None
     };
 
-    let memo = GcoapMemoState::new(memo_state, payload);
-    FutureState::get_mut_ref(context as *mut _).resolve(memo);
+    let blockwise = false; // !!!! [x] crate::server::start_fixture().await; in task_server()
+    //let blockwise = true; // !!!! [ ] crate::server::start().await; in task_server()
+    riot_wrappers::println!("@@ !!!! hardcoded !!!! blockwise: {}", blockwise);
+
+    FutureState::get_mut_ref(context as *mut _)
+        .resolve(GcoapMemoState::new(memo_state, blockwise, payload));
 }

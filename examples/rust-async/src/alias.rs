@@ -134,12 +134,7 @@ async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
         let first = req.await;
         println!("@@ first: {:?}", first);
 
-        println!("@@ TODO determine blockwise-ness from `first`");
-        let blockwise = false; // !!!! [ ] crate::server::start_fixture().await; in task_server()
-        //let blockwise = true; // !!!! [ ] crate::server::start().await; in task_server()
-
-        println!("@@ blockwise: {}", blockwise);
-        if blockwise {
+        if first.is_blockwise() {
             while let Some(req) = bs.next().await {
                 println!("@@ cont: {:?}", req.await);
             }
