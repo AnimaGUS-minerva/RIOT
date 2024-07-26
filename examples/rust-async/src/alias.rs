@@ -138,8 +138,8 @@ async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
             while let Some(req) = bs.next().await {
                 println!("@@ cont: {:?}", req.await);
             }
+        } else {
+            bs.close();
         }
     }
-
-    bs.close();
 }
