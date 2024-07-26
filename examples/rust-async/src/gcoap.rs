@@ -335,19 +335,22 @@ fn gcoap_req_resp_handler(memo: *const c_void, pdu: *const c_void, remote: *cons
     extern "C" {
         fn async_resp_handler(
             memo: *const c_void, pdu: *const c_void, remote: *const c_void,
-            payload: *mut c_void, payload_len: *mut c_void, context: *mut c_void) -> u8;
+            payload: *mut c_void, payload_len: *mut c_void,
+            context: *mut c_void, blockwise: *mut c_void) -> u8;
     }
 
     let mut context: *const c_void = core::ptr::null_mut();
     let mut payload_ptr: *const u8 = core::ptr::null_mut();
     let mut payload_len: usize = 0;
+    let mut blockwise: bool = false;
 
     let memo_state = unsafe {
         async_resp_handler(
             memo, pdu, remote,
             (&mut payload_ptr) as *mut *const u8 as *mut c_void,
             (&mut payload_len) as *mut usize as *mut c_void,
-            (&mut context) as *mut *const c_void as *mut c_void) };
+            (&mut context) as *mut *const c_void as *mut c_void,
+            (&mut blockwise) as *mut bool as *mut c_void) };
 
     let payload = if payload_len > 0 {
         let hvec: PayloadOut = Vec::from_slice(
@@ -358,9 +361,7 @@ fn gcoap_req_resp_handler(memo: *const c_void, pdu: *const c_void, remote: *cons
         None
     };
 
-    let blockwise = false; // !!!! [x] crate::server::start_fixture().await; in task_server()
-    //let blockwise = true; // !!!! [ ] crate::server::start().await; in task_server()
-    riot_wrappers::println!("@@ !!!! hardcoded !!!! blockwise: {}", blockwise);
+    riot_wrappers::println!("@@ memo_state: {} blockwise: {}", memo_state, blockwise);
 
     FutureState::get_mut_ref(context as *mut _)
         .resolve(GcoapMemoState::new(memo_state, blockwise, payload));

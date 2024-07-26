@@ -241,13 +241,12 @@ static void _resp_handler_blockwise_async(const gcoap_request_memo_t *memo, coap
 
 uint8_t async_resp_handler(
         const gcoap_request_memo_t *memo, coap_pkt_t* pdu, const sock_udp_ep_t *remote,
-        uint8_t **payload, size_t *payload_len, void **context
+        uint8_t **payload, size_t *payload_len, void **context, bool *blockwise
 ) {
     inner_resp_handler(memo, pdu, remote);
 
     *context = memo->context;
 
-    printf("@@ memo->state: %d\n", memo->state);
     if (memo->state == GCOAP_MEMO_TIMEOUT ||
         (memo->state != GCOAP_MEMO_RESP_TRUNC && memo->state != GCOAP_MEMO_RESP)) {
         *payload = NULL;
@@ -260,6 +259,9 @@ uint8_t async_resp_handler(
     coap_block1_t block;
     if (coap_get_block2(pdu, &block)) { // ask for next block if present
         _resp_handler_blockwise_async(memo, pdu, remote, &block);
+        *blockwise = true;
+    } else {
+        *blockwise = false;
     }
 
     return memo->state;
