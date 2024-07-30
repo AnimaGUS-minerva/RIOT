@@ -53,11 +53,35 @@ async fn test_async_gcoap() {
         return;
     }
 
-    if 1 == 1 { // WIP !!!! auto-handle blockwise context (like alias [3])
+    if 100 == 1 {
         gcoap_get_auto_wip("[::1]", "/.well-known/core").await;
         return;
     }
 
+    if 1 == 1 {
+        let (memo, bs) = gcoap_get_auto("[::1]", "/.well-known/core").await.unwrap();
+        println!("memo: {:?}", memo);
+        println!("bs: {:?}", bs);
+
+        if let Some(mut bs) = bs { // WIP - crate::server::start()
+            use super::stream::StreamExt;
+
+            panic!("*** FIXME (RUST PANIC before call ????)");
+            while let Some(req) = bs.next().await {
+//                println!("@@ memo cont: {:?}", req.await);
+                //==== debug
+                //let cont = req.await; // *** RUST PANIC before call ????
+                //println!("cont");
+            }
+            println!("blockwise done");
+        } else { // ok - crate::server::start_fixture()
+            println!("non-blockwise done");
+        }
+
+        return;
+    }
+
+    // TODO adapt `gcoap_get_auto_wip()` to various tests
     {
         use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
 
@@ -141,5 +165,23 @@ async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
         } else {
             bs.close();
         }
+    }
+}
+
+use super::gcoap::GcoapMemoState;
+use super::blockwise::BlockwiseStream;
+async fn gcoap_get_auto(addr: &str, uri: &str) -> Option<(GcoapMemoState, Option<BlockwiseStream>)> {
+    use super::gcoap::gcoap_get_blockwise;
+    use super::stream::StreamExt;
+
+    let mut bs = gcoap_get_blockwise(addr, uri).ok()?;
+    let req = bs.next().await?;
+    let memo = req.await;
+
+    if memo.is_blockwise() {
+        Some((memo, Some(bs)))
+    } else {
+        bs.close();
+        Some((memo, None))
     }
 }
