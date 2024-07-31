@@ -48,13 +48,13 @@ async fn test_async_timeout() {
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
-    if 0 == 1 { // NO auto-handle blockwise context (like alias [3])
+    if 0 == 1 { // NO auto-handle blockwise context unlike `test_gcoap_get_auto()`
         emulate_sync_gcoap_get("[::1]", "/.well-known/core");
         return;
     }
 
     if 1 == 1 {
-        test_gcoap_get_auto().await;
+        test_gcoap_get_auto("[::1]", "/.well-known/core").await;
         return;
     }
 
@@ -81,19 +81,19 @@ async fn test_async_gcoap() {
     }
 }
 
-async fn test_gcoap_get_auto() {
-    let (memo, bs) = gcoap_get_auto("[::1]", "/.well-known/core").await.unwrap();
+async fn test_gcoap_get_auto(addr: &str, uri: &str) {
+    let (memo, bs) = gcoap_get_auto(addr, uri).await.unwrap();
     println!("memo: {:?}", memo);
     println!("bs: {:?}", bs);
 
-    if let Some(mut bs) = bs { // ok - crate::server::start()
+    if let Some(mut bs) = bs { // ok for e.g. crate::server::start()
         use super::stream::StreamExt;
 
         while let Some(req) = bs.next().await {
             println!("@@ memo cont: {:?}", req.await);
         }
         println!("blockwise done");
-    } else { // ok - crate::server::start_fixture()
+    } else { // ok for e.g. crate::server::start_fixture()
         println!("non-blockwise done");
     }
 }
@@ -136,6 +136,8 @@ fn emulate_sync_gcoap_get(addr: &str, uri: &str) {
         core::ptr::null()); // !!!! gcoap_req_resp_handler as *const c_void);
     }
 }
+
+//
 
 use super::gcoap::GcoapMemoState;
 use super::blockwise::BlockwiseStream;
