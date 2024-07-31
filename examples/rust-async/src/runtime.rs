@@ -9,12 +9,12 @@ async fn task_main() {
 }
 
 pub static USE_FIXTURE_SERVER: bool =
-    true;
-//    false;
+    1 == 1; // !!
 
 #[embassy_executor::task]
 async fn task_server() {
     println!("task_server(): starting");
+    println!("USE_FIXTURE_SERVER: {}", USE_FIXTURE_SERVER);
     if USE_FIXTURE_SERVER {
         crate::server::start_fixture().await; // for `test_async_gcoap_fixture()`
     } else {

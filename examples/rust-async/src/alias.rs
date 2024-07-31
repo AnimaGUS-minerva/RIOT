@@ -18,7 +18,6 @@ pub const TABLE_ALIAS_FUNCTION: &[&str] = &[
     "f1",
     "f2",
     "f", // !!
-    "ff", // !!
 ];
 
 pub async fn run_function_alias(name: &str) {
@@ -27,7 +26,6 @@ pub async fn run_function_alias(name: &str) {
         "f1" => test_async_sleep().await,
         "f2" => test_async_timeout().await,
         "f" => test_async_gcoap().await, // !!
-        "ff" => test_async_gcoap_fixture().await, // !!
         _ => println!("oops, code for function alias [{}] is missing!", name),
     }
 }
@@ -52,10 +50,30 @@ async fn test_async_gcoap_fixture() {
 
     assert!(super::runtime::USE_FIXTURE_SERVER);
 
+    //
+
     // per 'gcoap_c/server.c'
     test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
     test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
     test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
+
+    //
+
+    use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
+    let gcoap_get_cli_stats = || gcoap_get("[::1]", "/cli/stats");
+
+    println!("----:");
+    println!("{:?}", gcoap_get_cli_stats().await);
+
+    println!("----:");
+    let _ = gcoap_post("[::1]", "/cli/stats", b"3000").await;
+    println!("{:?} (after COAP_POST)", gcoap_get_cli_stats().await);
+
+    println!("----:");
+    let _ = gcoap_put("[::1]", "/cli/stats", b"1000").await;
+    println!("{:?} (after COAP_PUT)", gcoap_get_cli_stats().await);
+
+    //
 }
 
 async fn test_async_gcoap() {
@@ -66,33 +84,12 @@ async fn test_async_gcoap() {
         return;
     }
 
-    if 1 == 1 { // per 'server.rs'
-        assert!(!super::runtime::USE_FIXTURE_SERVER);
-
+    if super::runtime::USE_FIXTURE_SERVER {
+        test_async_gcoap_fixture().await;
+        return;
+    } else { // per 'server.rs'
         test_gcoap_get_auto("[::1]", "/.well-known/core").await; // blockwise
         return;
-    }
-
-    {
-        use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
-
-        println!("-------- out-0:");
-        println!("{:?}", gcoap_get("[::1]", "/.well-known/core").await);
-        // !!!! FIXME wrong modality  <<<< --- blockwise start ---
-        // TODO auto-handle blockwise context (like alias [3])
-
-/*
-        println!("-------- out-1:");
-        println!("{:?}", gcoap_get("[::1]", "/cli/stats").await);
-
-        let addr_self = "[::1]:5683";
-        println!("-------- out-2:");
-        let _ = gcoap_post(addr_self, "/cli/stats", b"3000").await;
-        println!("{:?}", gcoap_get(addr_self, "/cli/stats").await);
-        println!("-------- out-3:");
-        let _ = gcoap_put(addr_self, "/cli/stats", b"1000").await;
-        println!("{:?}", gcoap_get(addr_self, "/cli/stats").await);
-*/
     }
 }
 
