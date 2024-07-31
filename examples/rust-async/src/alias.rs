@@ -84,11 +84,12 @@ async fn test_async_gcoap() {
         return;
     }
 
-    if super::runtime::USE_FIXTURE_SERVER {
-        test_async_gcoap_fixture().await;
-        return;
-    } else { // per 'server.rs'
-        test_gcoap_get_auto("[::1]", "/.well-known/core").await; // blockwise
+    if 1 == 1 {
+        if super::runtime::USE_FIXTURE_SERVER {
+            test_async_gcoap_fixture().await;
+        } else { // per 'server.rs'
+            test_gcoap_get_auto("[::1]", "/.well-known/core").await; // blockwise
+        }
         return;
     }
 }
