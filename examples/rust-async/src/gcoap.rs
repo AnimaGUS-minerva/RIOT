@@ -98,6 +98,24 @@ pub fn gcoap_get(addr: &str, uri: &str) -> impl Future<Output = GcoapMemoState> 
     Req::new(COAP_METHOD_GET, addr, uri, None)
 }
 
+pub async fn gcoap_get_auto(addr: &str, uri: &str) -> Option<(GcoapMemoState, Option<BlockwiseStream>)> {
+    use super::gcoap::gcoap_get_blockwise;
+    use super::stream::StreamExt;
+
+    let mut bs = gcoap_get_blockwise(addr, uri).ok()?;
+    let req = bs.next().await?;
+    let memo = req.await;
+
+    if memo.is_blockwise() {
+        Some((memo, Some(bs)))
+    } else {
+        bs.close();
+        Some((memo, None))
+    }
+}
+
+//
+
 pub fn gcoap_post(addr: &str, uri: &str, payload: &[u8]) -> impl Future<Output = GcoapMemoState> + 'static {
     Req::new(COAP_METHOD_POST, addr, uri, Some(Vec::from_slice(payload).unwrap()))
 }

@@ -48,7 +48,7 @@ async fn test_async_timeout() {
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
-    if 0 == 1 { // NO auto-handle blockwise context unlike `test_gcoap_get_auto()`
+    if 0 == 1 { // NO auto-handle blockwise context unlike `gcoap_get_auto()`
         emulate_sync_gcoap_get("[::1]", "/.well-known/core");
         return;
     }
@@ -82,13 +82,14 @@ async fn test_async_gcoap() {
 }
 
 async fn test_gcoap_get_auto(addr: &str, uri: &str) {
+    use super::gcoap::gcoap_get_auto;
+    use super::stream::StreamExt;
+
     let (memo, bs) = gcoap_get_auto(addr, uri).await.unwrap();
     println!("memo: {:?}", memo);
     println!("bs: {:?}", bs);
 
     if let Some(mut bs) = bs { // ok for e.g. crate::server::start()
-        use super::stream::StreamExt;
-
         while let Some(req) = bs.next().await {
             println!("@@ memo cont: {:?}", req.await);
         }
@@ -138,21 +139,3 @@ fn emulate_sync_gcoap_get(addr: &str, uri: &str) {
 }
 
 //
-
-use super::gcoap::GcoapMemoState;
-use super::blockwise::BlockwiseStream;
-async fn gcoap_get_auto(addr: &str, uri: &str) -> Option<(GcoapMemoState, Option<BlockwiseStream>)> {
-    use super::gcoap::gcoap_get_blockwise;
-    use super::stream::StreamExt;
-
-    let mut bs = gcoap_get_blockwise(addr, uri).ok()?;
-    let req = bs.next().await?;
-    let memo = req.await;
-
-    if memo.is_blockwise() {
-        Some((memo, Some(bs)))
-    } else {
-        bs.close();
-        Some((memo, None))
-    }
-}
