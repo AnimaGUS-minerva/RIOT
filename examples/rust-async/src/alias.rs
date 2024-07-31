@@ -18,6 +18,7 @@ pub const TABLE_ALIAS_FUNCTION: &[&str] = &[
     "f1",
     "f2",
     "f", // !!
+    "ff", // !!
 ];
 
 pub async fn run_function_alias(name: &str) {
@@ -26,6 +27,7 @@ pub async fn run_function_alias(name: &str) {
         "f1" => test_async_sleep().await,
         "f2" => test_async_timeout().await,
         "f" => test_async_gcoap().await, // !!
+        "ff" => test_async_gcoap_fixture().await, // !!
         _ => println!("oops, code for function alias [{}] is missing!", name),
     }
 }
@@ -45,6 +47,17 @@ async fn test_async_timeout() {
     crate::util::set_timeout(2000, || println!("it works!")).await;
 }
 
+async fn test_async_gcoap_fixture() {
+    println!("test_async_gcoap_fixture():");
+
+    assert!(super::runtime::USE_FIXTURE_SERVER);
+
+    // per 'gcoap_c/server.c'
+    test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
+    test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
+    test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
+}
+
 async fn test_async_gcoap() {
     println!("test_async_gcoap():");
 
@@ -53,8 +66,10 @@ async fn test_async_gcoap() {
         return;
     }
 
-    if 1 == 1 {
-        test_gcoap_get_auto("[::1]", "/.well-known/core").await;
+    if 1 == 1 { // per 'server.rs'
+        assert!(!super::runtime::USE_FIXTURE_SERVER);
+
+        test_gcoap_get_auto("[::1]", "/.well-known/core").await; // blockwise
         return;
     }
 
