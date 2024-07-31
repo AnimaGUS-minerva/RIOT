@@ -59,29 +59,10 @@ async fn test_async_gcoap() {
     }
 
     if 1 == 1 {
-        let (memo, bs) = gcoap_get_auto("[::1]", "/.well-known/core").await.unwrap();
-        println!("memo: {:?}", memo);
-        println!("bs: {:?}", bs);
-
-        if let Some(mut bs) = bs { // WIP - crate::server::start()
-            use super::stream::StreamExt;
-
-            panic!("*** FIXME (RUST PANIC before call ????)");
-            while let Some(req) = bs.next().await {
-//                println!("@@ memo cont: {:?}", req.await);
-                //==== debug
-                //let cont = req.await; // *** RUST PANIC before call ????
-                //println!("cont");
-            }
-            println!("blockwise done");
-        } else { // ok - crate::server::start_fixture()
-            println!("non-blockwise done");
-        }
-
+        test_gcoap_get_auto().await;
         return;
     }
 
-    // TODO adapt `gcoap_get_auto_wip()` to various tests
     {
         use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
 
@@ -105,8 +86,21 @@ async fn test_async_gcoap() {
     }
 }
 
-async fn test_async_gcoap_blockwise() {
-    todo!();
+async fn test_gcoap_get_auto() {
+    let (memo, bs) = gcoap_get_auto("[::1]", "/.well-known/core").await.unwrap();
+    println!("memo: {:?}", memo);
+    println!("bs: {:?}", bs);
+
+    if let Some(mut bs) = bs { // ok - crate::server::start()
+        use super::stream::StreamExt;
+
+        while let Some(req) = bs.next().await {
+            println!("@@ memo cont: {:?}", req.await);
+        }
+        println!("blockwise done");
+    } else { // ok - crate::server::start_fixture()
+        println!("non-blockwise done");
+    }
 }
 
 //
