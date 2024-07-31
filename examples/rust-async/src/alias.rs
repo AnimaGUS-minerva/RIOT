@@ -53,11 +53,6 @@ async fn test_async_gcoap() {
         return;
     }
 
-    if 100 == 1 {
-        gcoap_get_auto_wip("[::1]", "/.well-known/core").await;
-        return;
-    }
-
     if 1 == 1 {
         test_gcoap_get_auto().await;
         return;
@@ -139,26 +134,6 @@ fn emulate_sync_gcoap_get(addr: &str, uri: &str) {
         blockwise, blockwise_state_index.unwrap_or(0 /* to be ignored */),
         core::ptr::null(), // !!!! fstat_ptr as *const c_void, // context
         core::ptr::null()); // !!!! gcoap_req_resp_handler as *const c_void);
-    }
-}
-
-async fn gcoap_get_auto_wip(addr: &str, uri: &str) {
-    use super::gcoap::gcoap_get_blockwise;
-    use super::stream::StreamExt;
-
-    let mut bs = gcoap_get_blockwise(addr, uri).unwrap();
-
-    if let Some(req) = bs.next().await {
-        let first = req.await;
-        println!("@@ first: {:?}", first);
-
-        if first.is_blockwise() {
-            while let Some(req) = bs.next().await {
-                println!("@@ cont: {:?}", req.await);
-            }
-        } else {
-            bs.close();
-        }
     }
 }
 
