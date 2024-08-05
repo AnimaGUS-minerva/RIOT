@@ -46,7 +46,7 @@ async fn test_async_timeout() {
 }
 
 async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
-    println!("test_async_gcoap_fixture():");
+    println!("test_async_gcoap_fixture(): 🧪");
 
     assert!(crate::runtime::USE_FIXTURE_SERVER);
 
@@ -77,37 +77,36 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     println!("{:?}", gcoap_get_cli_stats().await);
 
     println!("----:");
-    let _ = gcoap_post("[::1]", "/cli/stats", b"3000").await;
+    let _ = gcoap_post("[::1]", "/cli/stats", b"3000").await; // NOP (endpoint is for COAP_GET | COAP_PUT)
     println!("{:?} (after COAP_POST)", gcoap_get_cli_stats().await);
 
     println!("----:");
     let _ = gcoap_put("[::1]", "/cli/stats", b"1000").await;
     println!("{:?} (after COAP_PUT)", gcoap_get_cli_stats().await);
 
-    //
+    println!("test_async_gcoap_fixture(): ✅");
 }
 
 async fn test_async_gcoap() {
-    println!("test_async_gcoap():");
+    println!("test_async_gcoap(): 🧪");
 
-    if 0 == 1 { // NO auto-handle blockwise context unlike `gcoap_get_auto()`
+    if 0 == 1 { // debug; NO auto-handle blockwise context unlike `gcoap_get_auto()`
         emulate_sync_gcoap_get("[::1]", "/.well-known/core");
         return;
     }
 
-    if 1 == 1 {
-        if crate::runtime::USE_FIXTURE_SERVER {
-            test_async_gcoap_fixture().await;
-        } else { // per 'server.rs'
-            let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
+    if crate::runtime::USE_FIXTURE_SERVER {
+        test_async_gcoap_fixture().await;
+    } else { // per 'server.rs'
+        let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
 
-            assert!(blockwise);
-            if let GcoapMemoState::Resp(_, Some(payload)) = memo {
-                assert!(payload.len() > 0);
-            } else { panic!(); }
-        }
-        return;
+        assert!(blockwise);
+        if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+            assert!(payload.len() > 0);
+        } else { panic!(); }
     }
+
+    println!("test_async_gcoap(): ✅");
 }
 
 use crate::gcoap::{gcoap_get_auto, GcoapMemoState};
