@@ -45,17 +45,28 @@ async fn test_async_timeout() {
     crate::util::set_timeout(2000, || println!("it works!")).await;
 }
 
-async fn test_async_gcoap_fixture() {
+async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     println!("test_async_gcoap_fixture():");
 
     assert!(crate::runtime::USE_FIXTURE_SERVER);
 
     //
 
-    // per 'gcoap_c/server.c'
-    test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
-    test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
-    test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
+    let assert_memo_is_some = |memo| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+        assert!(payload.len() > 0);
+    } else { panic!(); };
+
+    let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
+    assert_eq!(blockwise, false);
+    assert_memo_is_some(memo);
+
+    let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
+    assert_eq!(blockwise, false);
+    assert_memo_is_some(memo);
+
+    let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
+    assert_eq!(blockwise, false);
+    assert_memo_is_some(memo);
 
     //
 
