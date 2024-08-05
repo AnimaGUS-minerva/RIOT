@@ -48,7 +48,7 @@ async fn test_async_timeout() {
 async fn test_async_gcoap_fixture() {
     println!("test_async_gcoap_fixture():");
 
-    assert!(super::runtime::USE_FIXTURE_SERVER);
+    assert!(crate::runtime::USE_FIXTURE_SERVER);
 
     //
 
@@ -59,7 +59,7 @@ async fn test_async_gcoap_fixture() {
 
     //
 
-    use super::gcoap::{gcoap_get, gcoap_post, gcoap_put};
+    use crate::gcoap::{gcoap_get, gcoap_post, gcoap_put};
     let gcoap_get_cli_stats = || gcoap_get("[::1]", "/cli/stats");
 
     println!("----:");
@@ -85,31 +85,38 @@ async fn test_async_gcoap() {
     }
 
     if 1 == 1 {
-        if super::runtime::USE_FIXTURE_SERVER {
+        if crate::runtime::USE_FIXTURE_SERVER {
             test_async_gcoap_fixture().await;
         } else { // per 'server.rs'
-            test_gcoap_get_auto("[::1]", "/.well-known/core").await; // blockwise
+            let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
+
+            assert!(blockwise);
+            if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+                assert!(payload.len() > 0);
+            } else { panic!(); }
         }
         return;
     }
 }
 
-async fn test_gcoap_get_auto(addr: &str, uri: &str) {
-    use super::gcoap::gcoap_get_auto;
-    use super::stream::StreamExt;
+use crate::gcoap::{gcoap_get_auto, GcoapMemoState};
+use crate::stream::StreamExt;
+async fn test_gcoap_get_auto(addr: &str, uri: &str) -> (GcoapMemoState, bool) {
 
-    let (memo, bs) = gcoap_get_auto(addr, uri).await.unwrap();
+    let (memo, mut bs) = gcoap_get_auto(addr, uri).await.unwrap();
     println!("memo: {:?}", memo);
     println!("bs: {:?}", bs);
 
-    if let Some(mut bs) = bs { // ok for e.g. crate::server::start()
+    if let Some(ref mut bs) = bs {
         while let Some(req) = bs.next().await {
             println!("@@ memo cont: {:?}", req.await);
         }
         println!("blockwise done");
-    } else { // ok for e.g. crate::server::start_fixture()
+    } else {
         println!("non-blockwise done");
     }
+
+    (memo, bs.is_some())
 }
 
 //
