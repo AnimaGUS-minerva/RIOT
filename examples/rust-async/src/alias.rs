@@ -52,37 +52,41 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
 
     //
 
-    let assert_memo_is_some = |memo| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+    let assert_memo_resp_payload = |memo| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
         assert!(payload.len() > 0);
     } else { panic!(); };
 
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
     assert_eq!(blockwise, false);
-    assert_memo_is_some(memo);
+    assert_memo_resp_payload(memo);
 
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
     assert_eq!(blockwise, false);
-    assert_memo_is_some(memo);
+    assert_memo_resp_payload(memo);
 
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
     assert_eq!(blockwise, false);
-    assert_memo_is_some(memo);
+    assert_memo_resp_payload(memo);
 
     //
 
     use crate::gcoap::{gcoap_get, gcoap_post, gcoap_put};
     let gcoap_get_cli_stats = || gcoap_get("[::1]", "/cli/stats");
 
-    println!("----:");
-    println!("{:?}", gcoap_get_cli_stats().await);
+    let assert_cli_stats = |memo, expected| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+        assert_eq!(payload, expected);
+    } else { panic!(); };
 
-    println!("----:");
+    println!("----: (orig)");
+    assert_cli_stats(gcoap_get_cli_stats().await, "0".as_bytes());
+
+    println!("----: (after COAP_POST)");
     let _ = gcoap_post("[::1]", "/cli/stats", b"3000").await; // NOP (endpoint is for COAP_GET | COAP_PUT)
-    println!("{:?} (after COAP_POST)", gcoap_get_cli_stats().await);
+    assert_cli_stats(gcoap_get_cli_stats().await, "0".as_bytes());
 
-    println!("----:");
+    println!("----: (after COAP_PUT)");
     let _ = gcoap_put("[::1]", "/cli/stats", b"1000").await;
-    println!("{:?} (after COAP_PUT)", gcoap_get_cli_stats().await);
+    assert_cli_stats(gcoap_get_cli_stats().await, "1000".as_bytes());
 
     println!("test_async_gcoap_fixture(): ✅");
 }
