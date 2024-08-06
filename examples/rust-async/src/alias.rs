@@ -73,20 +73,20 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     use crate::gcoap::{gcoap_get, gcoap_post, gcoap_put};
     let gcoap_get_cli_stats = || gcoap_get("[::1]", "/cli/stats");
 
-    let assert_cli_stats = |memo, expected| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+    let assert_cli_stats = |memo, expected: &[u8]| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
         assert_eq!(payload, expected);
     } else { panic!(); };
 
     println!("----: (orig)");
-    assert_cli_stats(gcoap_get_cli_stats().await, "0".as_bytes());
+    assert_cli_stats(gcoap_get_cli_stats().await, b"0");
 
     println!("----: (after COAP_POST)");
     let _ = gcoap_post("[::1]", "/cli/stats", b"3000").await; // NOP (endpoint is for COAP_GET | COAP_PUT)
-    assert_cli_stats(gcoap_get_cli_stats().await, "0".as_bytes());
+    assert_cli_stats(gcoap_get_cli_stats().await, b"0");
 
     println!("----: (after COAP_PUT)");
     let _ = gcoap_put("[::1]", "/cli/stats", b"1000").await;
-    assert_cli_stats(gcoap_get_cli_stats().await, "1000".as_bytes());
+    assert_cli_stats(gcoap_get_cli_stats().await, b"1000");
 
     println!("test_async_gcoap_fixture(): ✅");
 }
@@ -109,6 +109,8 @@ async fn test_async_gcoap() {
             assert!(payload.len() > 0);
         } else { panic!(); }
     }
+
+    // 111 add inner blockwise tests, refactor into test.rs
 
     println!("test_async_gcoap(): ✅");
 }
