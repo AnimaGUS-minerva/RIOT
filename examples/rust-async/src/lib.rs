@@ -15,6 +15,7 @@ mod gcoap;
 
 mod shell;
 mod alias;
+mod test;
 
 use riot_wrappers::{riot_main, println};
 
