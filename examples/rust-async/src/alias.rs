@@ -18,6 +18,7 @@ pub const TABLE_ALIAS_FUNCTION: &[&str] = &[
     "f1",
     "f2",
     "f", // !!
+    "g", // !!
 ];
 
 pub async fn run_function_alias(name: &str) {
@@ -26,6 +27,7 @@ pub async fn run_function_alias(name: &str) {
         "f1" => test_async_sleep().await,
         "f2" => test_async_timeout().await,
         "f" => crate::test::gcoap::test_async_gcoap().await, // !!
+        "g" => crate::test::blockwise::test_async_blockwise().await, // !!
         _ => println!("oops, code for function alias [{}] is missing!", name),
     }
 }
