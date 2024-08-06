@@ -4,28 +4,58 @@ use crate::runtime::USE_FIXTURE_SERVER;
 use crate::gcoap::*;
 use crate::stream::StreamExt;
 
+pub async fn test_async_gcoap() {
+    println!("test_async_gcoap(): 🧪");
+
+    if 0 == 1 { // debug; NO auto-handle blockwise context unlike `gcoap_get_auto()`
+        emulate_sync_gcoap_get("[::1]", "/.well-known/core");
+        return;
+    }
+
+    if USE_FIXTURE_SERVER {
+        test_async_gcoap_fixture().await; // uses 'gcoap_c/server.c'
+    } else {
+        test_async_gcoap_rs().await; // uses 'server.rs'
+    }
+
+    println!("test_async_gcoap(): ✅");
+}
+
+fn assert_memo_resp_payload(memo: &GcoapMemoState) {
+    if let GcoapMemoState::Resp(_, Some(payload)) = memo {
+        assert!(payload.len() > 0);
+    } else { panic!(); };
+}
+
+async fn test_async_gcoap_rs() { // per 'server.rs'
+    println!("test_async_gcoap_rs(): 🧪");
+    assert!(!USE_FIXTURE_SERVER);
+
+    let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
+
+    assert!(blockwise);
+    assert_memo_resp_payload(&memo);
+
+    println!("test_async_gcoap_rs(): ✅");
+}
+
 async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     println!("test_async_gcoap_fixture(): 🧪");
-
     assert!(USE_FIXTURE_SERVER);
 
     //
 
-    let assert_memo_resp_payload = |memo| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
-        assert!(payload.len() > 0);
-    } else { panic!(); };
-
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await; // non-blockwise
     assert_eq!(blockwise, false);
-    assert_memo_resp_payload(memo);
+    assert_memo_resp_payload(&memo);
 
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/cli/stats").await; // COAP_GET | COAP_PUT
     assert_eq!(blockwise, false);
-    assert_memo_resp_payload(memo);
+    assert_memo_resp_payload(&memo);
 
     let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/riot/board").await; // COAP_GET
     assert_eq!(blockwise, false);
-    assert_memo_resp_payload(memo);
+    assert_memo_resp_payload(&memo);
 
     //
 
@@ -47,28 +77,6 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     assert_cli_stats(gcoap_get_cli_stats().await, b"1000");
 
     println!("test_async_gcoap_fixture(): ✅");
-}
-
-pub async fn test_async_gcoap() {
-    println!("test_async_gcoap(): 🧪");
-
-    if 0 == 1 { // debug; NO auto-handle blockwise context unlike `gcoap_get_auto()`
-        emulate_sync_gcoap_get("[::1]", "/.well-known/core");
-        return;
-    }
-
-    if USE_FIXTURE_SERVER {
-        test_async_gcoap_fixture().await;
-    } else { // per 'server.rs'
-        let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
-
-        assert!(blockwise);
-        if let GcoapMemoState::Resp(_, Some(payload)) = memo {
-            assert!(payload.len() > 0);
-        } else { panic!(); }
-    }
-
-    println!("test_async_gcoap(): ✅");
 }
 
 async fn test_gcoap_get_auto(addr: &str, uri: &str) -> (GcoapMemoState, bool) {
