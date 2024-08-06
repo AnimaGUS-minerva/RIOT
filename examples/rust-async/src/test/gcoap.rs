@@ -1,10 +1,13 @@
 use riot_wrappers::println;
+use crate::runtime::USE_FIXTURE_SERVER;
 
+use crate::gcoap::*;
+use crate::stream::StreamExt;
 
 async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     println!("test_async_gcoap_fixture(): 🧪");
 
-    assert!(crate::runtime::USE_FIXTURE_SERVER);
+    assert!(USE_FIXTURE_SERVER);
 
     //
 
@@ -26,7 +29,6 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
 
     //
 
-    use crate::gcoap::{gcoap_get, gcoap_post, gcoap_put};
     let gcoap_get_cli_stats = || gcoap_get("[::1]", "/cli/stats");
 
     let assert_cli_stats = |memo, expected: &[u8]| if let GcoapMemoState::Resp(_, Some(payload)) = memo {
@@ -55,7 +57,7 @@ pub async fn test_async_gcoap() {
         return;
     }
 
-    if crate::runtime::USE_FIXTURE_SERVER {
+    if USE_FIXTURE_SERVER {
         test_async_gcoap_fixture().await;
     } else { // per 'server.rs'
         let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
@@ -69,8 +71,6 @@ pub async fn test_async_gcoap() {
     println!("test_async_gcoap(): ✅");
 }
 
-use crate::gcoap::{gcoap_get_auto, GcoapMemoState};
-use crate::stream::StreamExt;
 async fn test_gcoap_get_auto(addr: &str, uri: &str) -> (GcoapMemoState, bool) {
 
     let (memo, mut bs) = gcoap_get_auto(addr, uri).await.unwrap();
