@@ -9,7 +9,7 @@ async fn task_main() {
 }
 
 pub static USE_FIXTURE_SERVER: bool =
-    1 == 1; // !!
+    100 == 1; // !! TODO Makefile based switching
 
 #[embassy_executor::task]
 async fn task_server() {

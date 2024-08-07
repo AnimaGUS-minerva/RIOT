@@ -21,7 +21,7 @@ pub async fn test_async_gcoap() {
     println!("test_async_gcoap(): ✅");
 }
 
-fn assert_memo_resp_payload(memo: &GcoapMemoState) {
+pub fn assert_memo_resp_payload(memo: &GcoapMemoState) {
     if let GcoapMemoState::Resp(_, Some(payload)) = memo {
         assert!(payload.len() > 0);
     } else { panic!(); };
@@ -79,7 +79,7 @@ async fn test_async_gcoap_fixture() { // per 'gcoap_c/server.c'
     println!("test_async_gcoap_fixture(): ✅");
 }
 
-async fn test_gcoap_get_auto(addr: &str, uri: &str) -> (GcoapMemoState, bool) {
+pub async fn test_gcoap_get_auto(addr: &str, uri: &str) -> (GcoapMemoState, bool) {
 
     let (memo, mut bs) = gcoap_get_auto(addr, uri).await.unwrap();
     println!("memo: {:?}", memo);
