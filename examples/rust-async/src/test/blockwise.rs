@@ -54,14 +54,14 @@ async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseErr
             println!("🧪 debug NEW [blockwise-2]");
             let mut bs = gcoap_get_blockwise(addr, uri)?;
             assert!(blockwise_states_debug()[1].is_some(), "debug");
-/* FIXME *** RIOT kernel panic: RUST PANIC
+
             while let Some(req) = bs.next().await {
                 let out = req.await;
                 println!("@@ out_2: {:?}", out);
             }
-*/
+
             blockwise_states_print();
-//            assert!(blockwise_states_debug()[1].is_none(), "debug");
+            assert!(blockwise_states_debug()[1].is_none(), "debug");
         }
     }
 

@@ -27,7 +27,7 @@ riot-coap-handler-demos = { git = "https://gitlab.com/etonomy/riot-module-exampl
 riot-shell-commands = { git = "https://gitlab.com/etonomy/riot-module-examples/", default-features = false, features = [ "ztimer" ] }
 
 embassy-executor-riot = { git = "https://gitlab.com/etonomy/riot-module-examples" }
-embassy-executor = "0.5"
+embassy-executor = { version = "0.5", features = [ "task-arena-size-16384" ] }
 
 coap-handler = "0.2"
 heapless = "0.8"
