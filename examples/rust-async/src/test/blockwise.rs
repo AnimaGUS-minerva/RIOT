@@ -32,21 +32,24 @@ async fn test_async_blockwise_rs() -> Result<(), BlockwiseError> {
     test_blockwise_none().await?;
 
     println!("test_async_blockwise_rs(): ✅");
-
     Ok(())
 }
 
 async fn test_blockwise_payload(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
+    println!("test_blockwise_payload(): 🧪");
+
     let (memo, blockwise) = test_gcoap_get_auto(addr, uri).await;
     assert!(blockwise);
     assert_memo_resp_payload(&memo);
 
+    println!("test_blockwise_payload(): ✅");
     Ok(())
 }
 
 
 async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
-    println!("🧪 debug [blockwise-nested-0]");
+    println!("test_blockwise_nested(): 🧪");
+
     let mut bs = gcoap_get_blockwise(addr, uri)?;
     assert!(blockwise_states_debug()[0].is_some(), "debug");
 
@@ -57,7 +60,6 @@ async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseErr
         count += 1;
 
         if count == 1 {
-            println!("🧪 debug [blockwise-nested-1]");
             let mut bs = gcoap_get_blockwise(addr, uri)?;
             assert!(blockwise_states_debug()[1].is_some(), "debug");
 
@@ -76,20 +78,27 @@ async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseErr
     blockwise_states_print();
     assert!(blockwise_states_debug()[0].is_none(), "debug");
 
+    println!("test_blockwise_nested(): ✅");
     Ok(())
 }
 
 async fn test_blockwise_close(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
+    println!("test_blockwise_close(): 🧪");
 
+    println!("test_blockwise_close(): ✅");
     Ok(())
 }
 
 async fn test_blockwise_timeout() -> Result<(), BlockwiseError> {
+    println!("test_blockwise_timeout(): 🧪");
 
+    println!("test_blockwise_timeout(): ✅");
     Ok(())
 }
 
 async fn test_blockwise_none() -> Result<(), BlockwiseError> {
+    println!("test_blockwise_none(): 🧪");
 
+    println!("test_blockwise_none(): ✅");
     Ok(())
 }
