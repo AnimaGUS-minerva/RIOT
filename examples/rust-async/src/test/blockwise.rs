@@ -10,33 +10,40 @@ pub async fn test_async_blockwise() {
     println!("test_async_blockwise(): 🧪");
 
     if USE_FIXTURE_SERVER {
-//        test_async_blockwise_fixture().await; // uses 'gcoap_c/server.c'
+        //test_async_blockwise_fixture().await; // uses 'gcoap_c/server.c'
     } else {
-        test_async_blockwise_rs().await; // uses 'server.rs'
+        test_async_blockwise_rs().await.unwrap(); // uses 'server.rs'
     }
 
     println!("test_async_blockwise(): ✅");
 }
 
-async fn test_async_blockwise_rs() {
+async fn test_async_blockwise_rs() -> Result<(), BlockwiseError> {
     println!("test_async_blockwise_rs(): 🧪");
     assert!(!USE_FIXTURE_SERVER);
 
-    //
+    let addr = "[::1]";
+    let uri = "/.well-known/core";
 
-    let (memo, blockwise) = test_gcoap_get_auto("[::1]", "/.well-known/core").await;
+    test_blockwise_payload(addr, uri).await?;
+    test_blockwise_nested(addr, uri).await?;
+    test_blockwise_close(addr, uri).await?;
+    test_blockwise_timeout().await?;
+    test_blockwise_none().await?;
+
+    println!("test_async_blockwise_rs(): ✅");
+
+    Ok(())
+}
+
+async fn test_blockwise_payload(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
+    let (memo, blockwise) = test_gcoap_get_auto(addr, uri).await;
     assert!(blockwise);
     assert_memo_resp_payload(&memo);
 
-    //
-
-    test_blockwise_nested("[::1]", "/.well-known/core").await.unwrap();
-    // 111 ++ !!!!
-
-    //
-
-    println!("test_async_blockwise_rs(): ✅");
+    Ok(())
 }
+
 
 async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
     println!("🧪 debug [blockwise-nested-0]");
@@ -68,6 +75,21 @@ async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseErr
 
     blockwise_states_print();
     assert!(blockwise_states_debug()[0].is_none(), "debug");
+
+    Ok(())
+}
+
+async fn test_blockwise_close(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
+
+    Ok(())
+}
+
+async fn test_blockwise_timeout() -> Result<(), BlockwiseError> {
+
+    Ok(())
+}
+
+async fn test_blockwise_none() -> Result<(), BlockwiseError> {
 
     Ok(())
 }
