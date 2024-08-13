@@ -85,11 +85,7 @@ const COAP_METHOD_PUT      : CoapMethod = 0x03;
 
 //
 
-pub use super::blockwise::{
-    BlockwiseError, BLOCKWISE_STATES_MAX,
-    blockwise_states_print, blockwise_states_debug};
-
-use super::blockwise::{BlockwiseStream, BlockwiseData, BLOCKWISE_HDR_MAX};
+use super::blockwise::{BlockwiseError, BlockwiseStream, BlockwiseData, BLOCKWISE_HDR_MAX};
 pub fn gcoap_get_blockwise(addr: &str, uri: &str) -> Result<BlockwiseStream, BlockwiseError> {
     BlockwiseData::send_blockwise_req(None, Some((addr, uri)), None)
 }
