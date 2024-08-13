@@ -31,6 +31,7 @@ async fn test_async_blockwise_rs() {
     //
 
     test_blockwise_nested("[::1]", "/.well-known/core").await.unwrap();
+    // 111 ++ !!!!
 
     //
 
@@ -38,32 +39,32 @@ async fn test_async_blockwise_rs() {
 }
 
 async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
-    println!("🧪 debug NEW [blockwise-1]");
+    println!("🧪 debug [blockwise-nested-0]");
     let mut bs = gcoap_get_blockwise(addr, uri)?;
     assert!(blockwise_states_debug()[0].is_some(), "debug");
 
-    let mut debug_count = 0;
+    let mut count = 0;
     while let Some(req) = bs.next().await {
-        println!("req: {:?}", req);
+        let _out = req.await;
+        //println!("@@ _out_nested_0: {:?}", _out);
+        count += 1;
 
-        let out = req.await;
-        println!("@@ out_1: {:?}", out);
-        debug_count += 1;
-
-        if debug_count == 2 {
-            println!("🧪 debug NEW [blockwise-2]");
+        if count == 1 {
+            println!("🧪 debug [blockwise-nested-1]");
             let mut bs = gcoap_get_blockwise(addr, uri)?;
             assert!(blockwise_states_debug()[1].is_some(), "debug");
 
             while let Some(req) = bs.next().await {
-                let out = req.await;
-                println!("@@ out_2: {:?}", out);
+                let _out = req.await;
+                //println!("@@ _out_nested_1: {:?}", _out);
             }
 
             blockwise_states_print();
             assert!(blockwise_states_debug()[1].is_none(), "debug");
         }
     }
+
+    assert!(count > 2); // assume multiple blocks for this test endpoint
 
     blockwise_states_print();
     assert!(blockwise_states_debug()[0].is_none(), "debug");
