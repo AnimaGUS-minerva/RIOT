@@ -85,6 +85,31 @@ async fn test_blockwise_nested(addr: &str, uri: &str) -> Result<(), BlockwiseErr
 async fn test_blockwise_close(addr: &str, uri: &str) -> Result<(), BlockwiseError> {
     println!("test_blockwise_close(): 🧪");
 
+    let mut bss = heapless::Vec::<_, BLOCKWISE_STATES_MAX>::new();
+    for _ in 0..BLOCKWISE_STATES_MAX {
+        bss.push(gcoap_get_blockwise(addr, uri)?).unwrap();
+    }
+    assert_eq!(gcoap_get_blockwise(addr, uri).err(), Some(BlockwiseError::StateNotAvailable));
+
+    let req0 = bss[0].next().await.unwrap();
+    let req1 = bss[1].next().await.unwrap();
+
+    // before `.close()`
+
+    assert!(match req0.await {
+        GcoapMemoState::Resp(true, Some(x)) => x.len() > 0,
+        _ => false,
+    });
+
+    bss.iter_mut().for_each(|bs| bs.close());
+    blockwise_states_debug().iter().for_each(|x| assert!(x.is_none()));
+
+    // after `.close()`
+
+    assert!(bss[0].next().await.is_none());
+    assert!(bss[1].next().await.is_none());
+    assert_eq!(req1.await, GcoapMemoState::Err(false));
+
     println!("test_blockwise_close(): ✅");
     Ok(())
 }
