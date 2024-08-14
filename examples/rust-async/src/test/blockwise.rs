@@ -28,8 +28,8 @@ async fn test_async_blockwise_rs() -> Result<(), BlockwiseError> {
     test_blockwise_payload(addr, uri).await?;
     test_blockwise_nested(addr, uri).await?;
     test_blockwise_close(addr, uri).await?;
-    test_blockwise_timeout().await?;
     test_blockwise_none().await?;
+    test_blockwise_timeout().await?;
 
     println!("test_async_blockwise_rs(): ✅");
     Ok(())
@@ -114,16 +114,38 @@ async fn test_blockwise_close(addr: &str, uri: &str) -> Result<(), BlockwiseErro
     Ok(())
 }
 
-async fn test_blockwise_timeout() -> Result<(), BlockwiseError> {
-    println!("test_blockwise_timeout(): 🧪");
-
-    println!("test_blockwise_timeout(): ✅");
-    Ok(())
-}
-
 async fn test_blockwise_none() -> Result<(), BlockwiseError> {
     println!("test_blockwise_none(): 🧪");
 
+    let addr = "[::1]";
+    let uri = "/.well-known/core__"; // induce `Resp(None)`
+
+    let mut bs = gcoap_get_blockwise(addr, uri)?;
+    while let Some(req) = bs.next().await {
+        match req.await {
+            GcoapMemoState::Resp(false, None) => bs.close(),
+            _ => panic!(),
+        };
+    }
+
     println!("test_blockwise_none(): ✅");
+    Ok(())
+}
+
+async fn test_blockwise_timeout() -> Result<(), BlockwiseError> {
+    println!("test_blockwise_timeout(): 🧪");
+
+    let addr = "[::1]:5680"; // induce `Timeout`, not 5683
+    let uri = "/.well-known/core";
+
+    let mut bs = gcoap_get_blockwise(addr, uri)?;
+    while let Some(req) = bs.next().await {
+        match req.await {
+            GcoapMemoState::Timeout(false) => bs.close(),
+            _ => panic!(),
+        };
+    }
+
+    println!("test_blockwise_timeout(): ✅");
     Ok(())
 }
